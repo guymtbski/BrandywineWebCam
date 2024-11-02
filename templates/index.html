@@ -3,148 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam Timelapse</title>
+    <title>Image Slideshow</title>
     <style>
-        /* ... (your existing CSS styles) */
-
-        /* Styles for the modal */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1; 
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: rgb(0,0,0); 
-            background-color: rgba(0,0,0,0.4); 
-            padding-top: 60px;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto; 
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             padding: 20px;
-            border: 1px solid #888;
-            width: 80%; 
-            max-width: 600px;
-            text-align: center; /* Center the content */
         }
-        .close {
-            color: #aaa;
-            position: relative; /* Allow positioning within the modal */
-            top: 10px;
-            left: 90%; 
-            font-size: 28px;
-            font-weight: bold;
+        h1 {
+            margin-bottom: 20px;
         }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .modal-image {
+        .slideshow {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            max-width: 800px;
             width: 100%;
-            height: auto;
         }
-        .prev, .next {
+        .slideshow img {
+            width: 100%;
             cursor: pointer;
-            position: absolute;
-            top: 50%;
-            width: auto;
-            margin-top: -22px;
-            padding: 16px;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-            transition: 0.6s ease;
-            border-radius: 0 3px 3px 0;
-            user-select: none;
+            border: 2px solid #ccc;
+            transition: transform 0.2s;
         }
-        .next {
-            right: 0;
-            border-radius: 3px 0 0 3px;
+        .slideshow img:hover {
+            transform: scale(1.05);
         }
-        .prev:hover,
-        .next:hover {
-            background-color: rgba(0,0,0,0.8);
+        /* Lightbox overlay */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border: 5px solid #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
 <body>
-    <h1>Webcam Timelapse</h1>
-
-    <div class="video-container">
-        <video controls autoplay loop onerror="this.style.display='none'; document.getElementById('error-message').style.display='block';">
-            <source src="/images/timelapse.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <div id="error-message" class="error-message" style="display:none;">
-            Error: Unable to play the video. Please check back later.
-        </div>
-    </div>
-
-    <h2>Recent Images</h2>
-    <div class="image-grid">
+    <h1>Image Slideshow</h1>
+    <div class="slideshow">
         {% for image in images %}
-            <img src="/images/{{ image }}" alt="Webcam Image" onclick="openModal('{{ image }}')">
+            <img src="{{ url_for('serve_image', filename=image) }}" alt="Webcam Image" onclick="openLightbox(this.src)">
         {% endfor %}
     </div>
 
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <a class="prev" onclick="plusSlides(-1)">❮</a>
-            <a class="next" onclick="plusSlides(1)">❯</a>
-            <img id="modalImage" class="modal-image" src="" alt="Webcam Image">
-        </div>
+    <!-- Lightbox container -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <img id="lightboxImage" src="#" alt="Enlarged Image">
     </div>
 
     <script>
-        // Get the modal
-        var modal = document.getElementById("myModal");
-        var modalImg = document.getElementById("modalImage");
-
-        // Array of image filenames
-        var images = [
-            {% for image in images %}
-                '{{ image }}',
-            {% endfor %}
-        ];
-        var slideIndex = 1;
-
-        // Function to open the modal
-        function openModal(imageSrc) {
-            modal.style.display = "block";
-            modalImg.src = "/images/" + imageSrc;
-            // Find the index of the clicked image
-            slideIndex = images.indexOf(imageSrc) + 1;
-            showSlides(slideIndex);
+        function openLightbox(src) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+            lightboxImage.src = src;
+            lightbox.style.display = 'flex';
         }
 
-        // Function to close the modal
-        function closeModal() {
-            modal.style.display = "none";
-        }
-
-        // Next/previous controls
-        function plusSlides(n) {
-            showSlides(slideIndex += n);
-        }
-
-        // Function to show the slides
-        function showSlides(n) {
-            if (n > images.length) {slideIndex = 1}
-            if (n < 1) {slideIndex = images.length}
-            modalImg.src = "/images/" + images[slideIndex-1];
-        }
-
-        // Close the modal when the user clicks anywhere outside of the modal content
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
         }
     </script>
 </body>
