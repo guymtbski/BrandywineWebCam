@@ -5,48 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webcam Timelapse</title>
     <style>
-        body {
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-            color: #333;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            padding: 20px;
-            color: #555;
-        }
-        .video-container {
-            margin: 20px auto;
-            max-width: 80%;
-        }
-        video {
-            width: 100%;
-            max-width: 600px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-        }
-        .error-message {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            padding: 20px;
-            max-width: 80%;
-            margin: auto;
-        }
-        .image-grid img {
-            width: 100%;
-            height: auto;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            cursor: pointer; /* Make images clickable */
-        }
+        /* ... (your existing CSS styles) */
+
         /* Styles for the modal */
         .modal {
             display: none; 
@@ -68,10 +28,13 @@
             border: 1px solid #888;
             width: 80%; 
             max-width: 600px;
+            text-align: center; /* Center the content */
         }
         .close {
             color: #aaa;
-            float: right;
+            position: relative; /* Allow positioning within the modal */
+            top: 10px;
+            left: 90%; 
             font-size: 28px;
             font-weight: bold;
         }
@@ -84,6 +47,28 @@
         .modal-image {
             width: 100%;
             height: auto;
+        }
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            margin-top: -22px;
+            padding: 16px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+        }
+        .next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+        .prev:hover,
+        .next:hover {
+            background-color: rgba(0,0,0,0.8);
         }
     </style>
 </head>
@@ -110,6 +95,8 @@
     <div id="myModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+            <a class="prev" onclick="plusSlides(-1)">❮</a>
+            <a class="next" onclick="plusSlides(1)">❯</a>
             <img id="modalImage" class="modal-image" src="" alt="Webcam Image">
         </div>
     </div>
@@ -117,16 +104,40 @@
     <script>
         // Get the modal
         var modal = document.getElementById("myModal");
+        var modalImg = document.getElementById("modalImage");
+
+        // Array of image filenames
+        var images = [
+            {% for image in images %}
+                '{{ image }}',
+            {% endfor %}
+        ];
+        var slideIndex = 1;
 
         // Function to open the modal
         function openModal(imageSrc) {
             modal.style.display = "block";
-            document.getElementById("modalImage").src = "/images/" + imageSrc;
+            modalImg.src = "/images/" + imageSrc;
+            // Find the index of the clicked image
+            slideIndex = images.indexOf(imageSrc) + 1;
+            showSlides(slideIndex);
         }
 
         // Function to close the modal
         function closeModal() {
             modal.style.display = "none";
+        }
+
+        // Next/previous controls
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        // Function to show the slides
+        function showSlides(n) {
+            if (n > images.length) {slideIndex = 1}
+            if (n < 1) {slideIndex = images.length}
+            modalImg.src = "/images/" + images[slideIndex-1];
         }
 
         // Close the modal when the user clicks anywhere outside of the modal content
