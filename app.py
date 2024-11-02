@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, send_from_directory, jsonify
 import cv2
-from timelapse import create_timelapse  # Import the timelapse library
+from moviepy.editor import ImageSequenceClip  # Import from moviepy
 
 # Configure storage
 image_folder = "images"
@@ -73,20 +73,16 @@ def create_timelapse_video():
     if os.path.exists(video_path):
         creation_time = os.path.getmtime(video_path)
         now = time.time()
-        time_diff = now - creation_time  # Time difference in seconds
-        if time_diff < (30 * 60):  # 30 minutes in seconds
+        time_diff = now - creation_time
+        if time_diff < (30 * 60):
             print("Video is less than 30 minutes old. Skipping creation.")
             return
 
     try:
-        # Use the timelapse library to create the video
-        create_timelapse(
-            image_folder,            # Input folder containing images
-            video_path,              # Output video file path
-            fps=1,                   # Frames per second
-            image_extensions=['jpg'],  # Image file extensions to include
-            overwrite=True           # Overwrite existing video file
-        )
+        # Use moviepy to create the video
+        image_files = [os.path.join(image_folder, img) for img in images]
+        clip = ImageSequenceClip(image_files, fps=1)
+        clip.write_videofile(video_path, codec="libx264")  # Use H.264 codec
         print("Timelapse video created successfully at", video_path)
 
     except Exception as e:
