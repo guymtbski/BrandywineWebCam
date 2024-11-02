@@ -9,57 +9,55 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
             color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
         h1 {
+            padding: 20px;
             color: #555;
         }
-        .video-container, .image-gallery {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .video-container {
+            margin: 20px auto;
+            max-width: 80%;
         }
         video {
             width: 100%;
-            height: auto;
+            max-width: 600px;
+            border: 2px solid #ddd;
             border-radius: 8px;
         }
-        .image-gallery {
-            display: flex;
-            flex-wrap: wrap;
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
+            padding: 20px;
+            max-width: 80%;
+            margin: auto;
         }
-        .image-gallery img {
-            width: 23%;
-            border-radius: 8px;
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
 <body>
-
     <h1>Webcam Timelapse</h1>
-
+    
     <div class="video-container">
-        <h2>Timelapse Video</h2>
-        <video controls>
-            <source src="{{ url_for('serve_image', filename='timelapse.mp4') }}" type="video/mp4">
+        <video controls autoplay loop>
+            <source src="/timelapse" type="video/mp4">
             Your browser does not support the video tag.
         </video>
     </div>
 
-    <div class="image-gallery">
-        <h2>Latest Images</h2>
+    <h2>Recent Images</h2>
+    <div class="image-grid">
         {% for image in images %}
-            <img src="{{ url_for('serve_image', filename=image) }}" alt="Webcam Image">
+            <img src="/images/{{ image }}" alt="Webcam Image">
         {% endfor %}
     </div>
-
 </body>
 </html>
