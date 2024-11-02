@@ -6,6 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, send_from_directory, jsonify
 import cv2
+import subprocess  # Import for FFmpeg
 
 # Configure storage
 image_folder = "images"
@@ -68,19 +69,23 @@ def create_timelapse_video():
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
 
-    first_image = cv2.imread(os.path.join(image_folder, images[0]))
-    height, width, layers = first_image.shape
+    # Use FFmpeg to create the video
+    ffmpeg_cmd = [
+        'ffmpeg',
+        '-framerate', '1',  # Set the frame rate (1 FPS)
+        '-pattern_type', 'glob',  # Use glob pattern for input files
+        '-i', f'{image_folder}/*.jpg',  # Input images (assuming JPG format)
+        '-c:v', 'libx264',  # Use H.264 video codec
+        '-pix_fmt', 'yuv420p',  # Set pixel format for wider compatibility
+        video_path  # Output video file
+    ]
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))
+    try:
+        subprocess.run(ffmpeg_cmd, check=True)
+        print("Timelapse video created successfully at", video_path)
+    except subprocess.CalledProcessError as e:
+        print(f"Error creating video: {e}")
 
-    for image in images:
-        image_path = os.path.join(image_folder, image)
-        img = cv2.imread(image_path)
-        video.write(img)
-
-    video.release()
-    print("Timelapse video created successfully at", video_path)
 
 def scrape_initial_images():
     print("Scraping initial 24 images...")
