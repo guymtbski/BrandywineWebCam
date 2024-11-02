@@ -31,6 +31,6 @@ def create_timelapse(image_folder, output_video_path, fps=4):
     print(f"Timelapse video created at: {output_video_path}")
 
 # Usage
-image_folder = 'C:/Users/Admin/Desktop/brandywine_images'  # Change this to your image folder path
+image_folder = '/'  # Change this to your image folder path
 output_video_path = 'timelapse_video.mp4'  # Desired output video file name
 create_timelapse(image_folder, output_video_path)
