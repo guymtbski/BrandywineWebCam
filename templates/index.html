@@ -8,47 +8,58 @@
         body {
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
         }
         h1 {
-            color: #333;
-        }
-        h2 {
             color: #555;
         }
-        img {
-            max-width: 100%;
-            height: auto;
-            margin: 10px 0;
+        .video-container, .image-gallery {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         video {
-            max-width: 100%;
+            width: 100%;
             height: auto;
-            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .image-gallery img {
+            width: 23%;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
+
     <h1>Webcam Timelapse</h1>
 
-    <h2>Latest Image</h2>
-    {% if latest_image %}
-        <img src="{{ url_for('serve_image', filename=latest_image) }}" alt="Latest Webcam Image">
-    {% else %}
-        <p>No images available.</p>
-    {% endif %}
+    <div class="video-container">
+        <h2>Timelapse Video</h2>
+        <video controls>
+            <source src="{{ url_for('serve_image', filename='timelapse.mp4') }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
 
-    <h2>Timelapse Video</h2>
-    <video controls>
-        <source src="{{ url_for('serve_video', filename='timelapse.mp4') }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <div class="image-gallery">
+        <h2>Latest Images</h2>
+        {% for image in images %}
+            <img src="{{ url_for('serve_image', filename=image) }}" alt="Webcam Image">
+        {% endfor %}
+    </div>
 
-    <h2>Last 24 Images</h2>
-    {% for image in images %}
-        <img src="{{ url_for('serve_image', filename=image) }}" alt="WebCam Image">
-    {% endfor %}
 </body>
 </html>
