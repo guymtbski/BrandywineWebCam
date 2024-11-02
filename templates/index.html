@@ -6,52 +6,49 @@
     <title>Webcam Timelapse</title>
     <style>
         body {
-            background-color: #f0f0f0;  /* Light grey background */
+            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
             text-align: center;
+            margin: 0;
+            padding: 0;
         }
         h1 {
             color: #333;
         }
-        .images {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 20px 0;
+        h2 {
+            color: #555;
         }
-        .images img {
-            margin: 5px;
-            max-width: 200px; /* Adjust image size */
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 5px;
-            background-color: white;
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
         }
         video {
             max-width: 100%;
+            height: auto;
             margin: 20px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
         }
     </style>
 </head>
 <body>
     <h1>Webcam Timelapse</h1>
 
-    <!-- Timelapse Video -->
+    <h2>Latest Image</h2>
+    {% if latest_image %}
+        <img src="{{ url_for('serve_image', filename=latest_image) }}" alt="Latest Webcam Image">
+    {% else %}
+        <p>No images available.</p>
+    {% endif %}
+
     <h2>Timelapse Video</h2>
     <video controls>
-        <source src="{{ url_for('serve_timelapse') }}" type="video/mp4">
+        <source src="{{ url_for('serve_video', filename='timelapse.mp4') }}" type="video/mp4">
         Your browser does not support the video tag.
     </video>
 
-    <!-- Display last 24 images -->
     <h2>Last 24 Images</h2>
-    <div class="images">
-        {% for image in images %}
-            <img src="{{ url_for('serve_image', filename=image) }}" alt="WebCam Image">
-        {% endfor %}
-    </div>
+    {% for image in images %}
+        <img src="{{ url_for('serve_image', filename=image) }}" alt="WebCam Image">
+    {% endfor %}
 </body>
 </html>
