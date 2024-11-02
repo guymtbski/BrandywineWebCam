@@ -62,8 +62,8 @@ def manage_images():
 
 def create_timelapse_video():
     images = sorted(os.listdir(image_folder))[-max_images:]  # Get the last images
-    if not images:
-        print("No images to create a video.")
+    if len(images) < 2:  # Ensure there are at least 2 images to make a video
+        print("Not enough images to create a video.")
         return
 
     # Define the video file path
@@ -74,7 +74,7 @@ def create_timelapse_video():
     height, width, layers = first_image.shape
     
     # Create a VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 'avc1' is widely supported for MP4
     video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))  # 1 fps for timelapse
 
     # Write each image to the video
@@ -105,7 +105,8 @@ def index():
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
-    return send_from_directory(image_folder, filename)
+    mime_type = "video/mp4" if filename.endswith(".mp4") else "image/jpeg"
+    return send_from_directory(image_folder, filename, mimetype=mime_type)
 
 if __name__ == "__main__":
     # Run the scheduler in a background thread
