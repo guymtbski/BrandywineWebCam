@@ -1,6 +1,6 @@
-Flask
+timelapse
+opencv-python
 requests
 beautifulsoup4
-opencv-python
+flask
 schedule
-gunicorn
