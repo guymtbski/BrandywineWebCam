@@ -89,4 +89,28 @@ def create_timelapse_video():
 # Schedule image download at 1 minute past the hour and 1 minute past the half-hour
 def schedule_downloads():
     schedule.every().hour.at(":01").do(download_image)  # Every hour at minute 1
-    schedule.every().hour.at(":31").do
+    schedule.every().hour.at(":31").do(download_image)  # Every hour at minute 31
+
+# Start scheduling
+schedule_downloads()
+
+# Route to display the timelapse as an HTML slideshow
+@app.route("/")
+def index():
+    images = sorted(os.listdir(image_folder))[-max_images:]
+    return render_template("index.html", images=images)
+
+# Route to serve images and video
+@app.route("/images/<filename>")
+def serve_image(filename):
+    return send_from_directory(image_folder, filename)
+
+if __name__ == "__main__":
+    # Run the scheduler in the main thread
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+    # Run Flask app
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
