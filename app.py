@@ -69,15 +69,15 @@ def create_timelapse_video():
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
 
-    # Use FFmpeg to create the video
+    # Use FFmpeg to create the video with debugging
     ffmpeg_cmd = [
-        'ffmpeg',
-        '-framerate', '1',  # Set the frame rate (1 FPS)
-        '-pattern_type', 'glob',  # Use glob pattern for input files
-        '-i', f'{image_folder}/*.jpg',  # Input images (assuming JPG format)
-        '-c:v', 'libx264',  # Use H.264 video codec
-        '-pix_fmt', 'yuv420p',  # Set pixel format for wider compatibility
-        video_path  # Output video file
+        'ffmpeg', '-loglevel', 'debug',  # Add this for debugging
+        '-framerate', '1',
+        '-pattern_type', 'glob',
+        '-i', f'{image_folder}/*.jpg',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        video_path
     ]
 
     try:
@@ -85,7 +85,6 @@ def create_timelapse_video():
         print("Timelapse video created successfully at", video_path)
     except subprocess.CalledProcessError as e:
         print(f"Error creating video: {e}")
-
 
 def scrape_initial_images():
     print("Scraping initial 24 images...")
