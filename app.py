@@ -4,7 +4,7 @@ import schedule
 import time
 from datetime import datetime
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, send_from_directory, url_for
+from flask import Flask, render_template, send_from_directory, jsonify
 import cv2
 
 # Configure storage
@@ -20,6 +20,7 @@ page_url = 'https://pmsccams.com/?SearchDeviceID=4'
 app = Flask(__name__)
 
 def download_image():
+    """Download an image from the webcam page."""
     print("Fetching new image...")
     try:
         response = requests.get(page_url)
@@ -54,6 +55,7 @@ def download_image():
         print(f"Error occurred: {e}")
 
 def manage_images():
+    """Keep only the last max_images in the folder."""
     images = sorted(os.listdir(image_folder), reverse=True)
     if len(images) > max_images:
         for image in images[max_images:]:
@@ -61,9 +63,10 @@ def manage_images():
             print(f"Deleted old image: {image}")
 
 def create_timelapse_video():
+    """Create a timelapse video from the saved images."""
     images = sorted(os.listdir(image_folder))[-max_images:]  # Get the last images
-    if len(images) < 2:  # Ensure there are at least 2 images to make a video
-        print("Not enough images to create a video.")
+    if not images:
+        print("No images to create a video.")
         return
 
     # Define the video file path
@@ -74,7 +77,7 @@ def create_timelapse_video():
     height, width, layers = first_image.shape
     
     # Create a VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # 'avc1' is widely supported for MP4
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
     video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))  # 1 fps for timelapse
 
     # Write each image to the video
@@ -89,9 +92,8 @@ def create_timelapse_video():
 # Schedule image download at 1 minute past the hour and 1 minute past the half-hour
 def schedule_downloads():
     schedule.every().hour.at(":01").do(download_image)  # Every hour at minute 1
-    schedule.every().hour.at(":31").do(download_image)  # Every half hour at minute 1
+    schedule.every().hour.at(":31").do(download_image)  # Every half-hour at minute 1
 
-    # Run the scheduler in a background thread
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -100,18 +102,23 @@ def schedule_downloads():
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    return render_template("index.html", images=images, video_path="images/timelapse.mp4")
+    return render_template("index.html", images=images)
 
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
-    mime_type = "video/mp4" if filename.endswith(".mp4") else "image/jpeg"
-    return send_from_directory(image_folder, filename, mimetype=mime_type)
+    return send_from_directory(image_folder, filename)
+
+# Route to display the list of files in JSON format
+@app.route("/list-files")
+def list_files():
+    files = sorted(os.listdir(image_folder), reverse=True)  # List files in reverse order (latest first)
+    return jsonify(files)
 
 if __name__ == "__main__":
     # Run the scheduler in a background thread
     import threading
-    threading.Thread(target=schedule_downloads, daemon=True).start()
+    threading.Thread(target=schedule_downloads).start()
     
     # Run Flask app
     port = int(os.environ.get("PORT", 5000))
