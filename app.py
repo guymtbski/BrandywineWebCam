@@ -63,8 +63,8 @@ def manage_images():
 
 def create_timelapse_video():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    if not images:
-        print("No images to create a video.")
+    if len(images) < 10:  # Check for minimum number of images
+        print("Not enough images to create a video yet.")
         return
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
