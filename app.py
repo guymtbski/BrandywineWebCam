@@ -5,8 +5,6 @@ import time
 from datetime import datetime
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, send_from_directory, jsonify
-import cv2
-from moviepy.editor import ImageSequenceClip  # Import from moviepy
 
 # Configure storage
 image_folder = "images"
@@ -43,9 +41,8 @@ def download_image():
                     f.write(img_response.content)
                 print(f"Image saved successfully as {image_name}")
 
-                # Manage images and create timelapse
+                # Manage images
                 manage_images()
-                create_timelapse_video()
             else:
                 print("Downloaded content is not an image.")
         else:
@@ -60,33 +57,6 @@ def manage_images():
         for image in images[max_images:]:
             os.remove(os.path.join(image_folder, image))
             print(f"Deleted old image: {image}")
-
-def create_timelapse_video():
-    images = sorted(os.listdir(image_folder))[-max_images:]
-    if len(images) < 10:  # Check for minimum number of images
-        print("Not enough images to create a video yet.")
-        return
-
-    video_path = os.path.join(image_folder, 'timelapse.mp4')
-
-    # Check if the video already exists and is less than 30 minutes old
-    if os.path.exists(video_path):
-        creation_time = os.path.getmtime(video_path)
-        now = time.time()
-        time_diff = now - creation_time
-        if time_diff < (30 * 60):
-            print("Video is less than 30 minutes old. Skipping creation.")
-            return
-
-    try:
-        # Use moviepy to create the video
-        image_files = [os.path.join(image_folder, img) for img in images]
-        clip = ImageSequenceClip(image_files, fps=1)
-        clip.write_videofile(video_path, codec="libx264")  # Use H.264 codec
-        print("Timelapse video created successfully at", video_path)
-
-    except Exception as e:
-        print(f"Error creating video: {e}")
 
 def scrape_initial_images():
     print("Scraping initial 24 images...")
@@ -107,19 +77,16 @@ def schedule_downloads():
     import threading
     threading.Thread(target=schedule.run_pending, daemon=True).start()
 
-# Route to display the timelapse as an HTML slideshow
+# Route to display images in an HTML slideshow
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    return render_template("index.html", images=images, video_path="images/timelapse.mp4")
+    return render_template("index.html", images=images)
 
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
-    if filename == "timelapse.mp4":
-        return send_from_directory(image_folder, filename, mimetype="video/mp4")
-    else:
-        return send_from_directory(image_folder, filename)
+    return send_from_directory(image_folder, filename)
 
 @app.route("/list-files")
 def list_files():
