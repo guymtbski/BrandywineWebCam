@@ -2,14 +2,16 @@ import os
 import requests
 import schedule
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory
+import cv2
+from moviepy.editor import ImageSequenceClip
 
 # Configure storage
 image_folder = "images"
 os.makedirs(image_folder, exist_ok=True)
-max_images = 24  # Keeps only the last 24 images
+max_images = 24  # Keep only the last 24 images
 
 # Base URL and page URL
 base_url = 'https://pmsccams.com'
@@ -41,7 +43,7 @@ def download_image():
                     f.write(img_response.content)
                 print(f"Image saved successfully as {image_name}")
 
-                # Manage images to keep only the latest 24
+                # Manage images
                 manage_images()
             else:
                 print("Downloaded content is not an image.")
@@ -51,53 +53,69 @@ def download_image():
     except Exception as e:
         print(f"Error occurred: {e}")
 
+
 def manage_images():
     images = sorted(os.listdir(image_folder), reverse=True)
     if len(images) > max_images:
         for image in images[max_images:]:
             os.remove(os.path.join(image_folder, image))
             print(f"Deleted old image: {image}")
+    elif len(images) < max_images and len(images) > 0:
+        # Replicate the first image if there are less than 24 images
+        first_image = images[0]
+        for i in range(len(images), max_images):
+            new_image_name = f"WebCamImage_replicated_{i}.jpg"
+            new_image_path = os.path.join(image_folder, new_image_name)
+            os.system(f"cp {os.path.join(image_folder, first_image)} {new_image_path}")
+            print(f"Replicated image {first_image} as {new_image_name}")
 
-def scrape_initial_images():
-    print("Scraping initial 24 images...")
-    for _ in range(max_images):
-        download_image()
-        time.sleep(60)  # Wait 60 seconds between downloads
+
+def create_timelapse_video():
+    # Get the last 24 images, or replicate the first one if there are fewer
+    images = sorted(os.listdir(image_folder))[-max_images:]
+
+    video_path = os.path.join(image_folder, 'timelapse.mp4')
+
+    # Check if it's time to create a new video (every 12 hours)
+    if os.path.exists(video_path):
+        creation_time = datetime.fromtimestamp(os.path.getmtime(video_path))
+        now = datetime.now()
+        time_diff = now - creation_time
+        if time_diff < timedelta(hours=12):
+            print("Video is less than 12 hours old. Skipping creation.")
+            return
+
+    try:
+        # Use moviepy to create the video
+        image_files = [os.path.join(image_folder, img) for img in images]
+        clip = ImageSequenceClip(image_files, fps=1)
+        clip.write_videofile(video_path, codec="libx264")
+        print("Timelapse video created successfully at", video_path)
+    except Exception as e:
+        print(f"Error creating video: {e}")
 
 def schedule_downloads():
-    # Schedule downloads to start AFTER the initial scrape
     schedule.every().hour.at(":01").do(download_image)
     schedule.every().hour.at(":31").do(download_image)
 
-    # IMPORTANT: Wait for the initial scraping to finish
-    while len(os.listdir(image_folder)) < max_images:
-        time.sleep(10)  # Check every 10 seconds
-
-    # Now start the scheduler in the background
+    # Run the scheduler in a background thread
     import threading
     threading.Thread(target=schedule.run_pending, daemon=True).start()
 
-# Route to display the images as an HTML slideshow
+# Route to display the timelapse as an HTML slideshow
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    return render_template("index.html", images=images)
+    return render_template("index.html", images=images, video_path="images/timelapse.mp4")
 
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
-@app.route("/list-files")
-def list_files():
-    files = os.listdir(image_folder)
-    return jsonify(files)
-
 if __name__ == "__main__":
-    scrape_initial_images()  # Scrape initial images first
-    schedule_downloads()     # Then start the scheduler
+    # Schedule downloads
+    schedule_downloads()
 
-    port = int(os.environ.get("PORT", 5000))  # Bind to the port provided by Render
-    print(f"Starting server on port {port}")  # Diagnostic print statement
-    app.run(host="0.0.0.0", port=port)  # Bind to all addresses
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
