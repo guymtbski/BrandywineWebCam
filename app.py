@@ -90,10 +90,20 @@ def scrape_initial_images():
     print("Scraping initial 24 images...")
     for _ in range(max_images):
         download_image()
+        time.sleep(60)  # Wait 60 seconds between downloads
 
 def schedule_downloads():
+    # Schedule downloads to start AFTER the initial scrape
     schedule.every().hour.at(":01").do(download_image)
     schedule.every().hour.at(":31").do(download_image)
+
+    # IMPORTANT: Wait for the initial scraping to finish
+    while len(os.listdir(image_folder)) < max_images:
+        time.sleep(10)  # Check every 10 seconds
+
+    # Now start the scheduler in the background
+    import threading  # Import threading here
+    threading.Thread(target=schedule.run_pending, daemon=True).start()
 
 # Route to display the timelapse as an HTML slideshow
 @app.route("/")
@@ -115,11 +125,8 @@ def list_files():
     return jsonify(files)
 
 if __name__ == "__main__":
-    scrape_initial_images()
-    schedule_downloads()
-
-    import threading
-    threading.Thread(target=schedule.run_pending, daemon=True).start()
+    scrape_initial_images()  # Scrape initial images first
+    schedule_downloads()     # Then start the scheduler
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
