@@ -27,6 +27,11 @@
             border: 2px solid #ddd;
             border-radius: 8px;
         }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
         .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -47,10 +52,13 @@
     <h1>Webcam Timelapse</h1>
     
     <div class="video-container">
-        <video controls autoplay loop>
+        <video controls autoplay loop onerror="this.style.display='none'; document.getElementById('error-message').style.display='block';">
             <source src="/timelapse" type="video/mp4">
             Your browser does not support the video tag.
         </video>
+        <div id="error-message" class="error-message" style="display:none;">
+            Error: Unable to play the video. Please check back later.
+        </div>
     </div>
 
     <h2>Recent Images</h2>
