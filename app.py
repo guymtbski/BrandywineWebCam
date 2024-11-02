@@ -41,7 +41,7 @@ def download_image():
                     f.write(img_response.content)
                 print(f"Image saved successfully as {image_name}")
 
-                # Manage images
+                # Manage images to keep only the latest 24
                 manage_images()
             else:
                 print("Downloaded content is not an image.")
@@ -77,7 +77,7 @@ def schedule_downloads():
     import threading
     threading.Thread(target=schedule.run_pending, daemon=True).start()
 
-# Route to display images in an HTML slideshow
+# Route to display the images as an HTML slideshow
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
@@ -97,5 +97,5 @@ if __name__ == "__main__":
     scrape_initial_images()  # Scrape initial images first
     schedule_downloads()     # Then start the scheduler
 
-    port = int(os.environ.get("PORT", 5000))  # Get port from environment
-    app.run(host="0.0.0.0", port=port, debug=False)  # Bind to all addresses, debug off
+    port = int(os.environ.get("PORT", 5000))  # Bind to the port provided by Render
+    app.run(host="0.0.0.0", port=port)  # Bind to all addresses
