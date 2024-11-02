@@ -1,4 +1,5 @@
 Flask
-schedule
 requests
 beautifulsoup4
+schedule
+opencv-python
