@@ -58,8 +58,10 @@ def manage_images():
             os.remove(os.path.join(image_folder, image))
             print(f"Deleted old image: {image}")
 
-# Schedule image download every 30 minutes
-schedule.every(30).minutes.do(download_image)
+# Schedule image download at specific times
+def schedule_downloads():
+    schedule.every().hour.at(":01").do(download_image)  # 1 minute after the hour
+    schedule.every().hour.at(":31").do(download_image)  # 1 minute after the half-hour
 
 def run_scheduler():
     while True:
@@ -78,6 +80,9 @@ def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
 if __name__ == "__main__":
+    # Schedule downloads
+    schedule_downloads()
+    
     # Run the scheduler in a background thread
     import threading
     threading.Thread(target=run_scheduler).start()
