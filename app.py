@@ -98,4 +98,6 @@ if __name__ == "__main__":
     schedule_downloads()     # Then start the scheduler
 
     port = int(os.environ.get("PORT", 5000))  # Bind to the port provided by Render
+    print(f"Starting server on port {port}")  # Diagnostic print statement
     app.run(host="0.0.0.0", port=port)  # Bind to all addresses
+
