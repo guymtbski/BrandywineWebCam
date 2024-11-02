@@ -114,8 +114,7 @@ def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
 if __name__ == "__main__":
-    # Schedule downloads
-    schedule_downloads()
+    # ... your existing code ...
 
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 5000))  # Get port from environment
+    app.run(host="0.0.0.0", port=port, debug=False)  # Bind to all addresses, debug off
