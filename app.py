@@ -69,12 +69,12 @@ def create_timelapse_video():
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
 
-    # Use FFmpeg to create the video with debugging
+    # Use FFmpeg to create the video with debugging and absolute path
     ffmpeg_cmd = [
-        'ffmpeg', '-loglevel', 'debug',  # Add this for debugging
+        'ffmpeg', '-loglevel', 'debug', 
         '-framerate', '1',
         '-pattern_type', 'glob',
-        '-i', f'{image_folder}/*.jpg',
+        '-i', f'{os.getcwd()}/{image_folder}/*.jpg',  # Use absolute path
         '-c:v', 'libx264',
         '-pix_fmt', 'yuv420p',
         video_path
