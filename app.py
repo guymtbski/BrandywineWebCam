@@ -69,12 +69,22 @@ def create_timelapse_video():
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
 
-    # Use FFmpeg to create the video with debugging and absolute path
+    # Check if the video already exists and is less than 30 minutes old
+    if os.path.exists(video_path):
+        creation_time = os.path.getmtime(video_path)
+        now = time.time()
+        time_diff = now - creation_time  # Time difference in seconds
+        if time_diff < (30 * 60):  # 30 minutes in seconds
+            print("Video is less than 30 minutes old. Skipping creation.")
+            return
+
+    # Use FFmpeg to create the video with overwrite option
     ffmpeg_cmd = [
-        'ffmpeg', '-loglevel', 'debug', 
+        'ffmpeg', '-y',  # Add -y to overwrite
+        '-loglevel', 'debug', 
         '-framerate', '1',
         '-pattern_type', 'glob',
-        '-i', f'{os.getcwd()}/{image_folder}/*.jpg',  # Use absolute path
+        '-i', f'{os.getcwd()}/{image_folder}/*.jpg',
         '-c:v', 'libx264',
         '-pix_fmt', 'yuv420p',
         video_path
