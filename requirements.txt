@@ -1,4 +1,4 @@
-timelapse
+moviepy
 opencv-python
 requests
 beautifulsoup4
