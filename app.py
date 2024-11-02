@@ -130,5 +130,5 @@ if __name__ == "__main__":
     scrape_initial_images()  # Scrape initial images first
     schedule_downloads()     # Then start the scheduler
 
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 5000))  # Get port from environment
+    app.run(host="0.0.0.0", port=port, debug=False)  # Bind to all addresses, debug off
