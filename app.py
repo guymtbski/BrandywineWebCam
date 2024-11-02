@@ -4,9 +4,8 @@ import schedule
 import time
 from datetime import datetime
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, url_for
 import cv2
-import numpy as np  # Make sure to import numpy for creating test frames
 
 # Configure storage
 image_folder = "images"
@@ -90,34 +89,28 @@ def create_timelapse_video():
 # Schedule image download at 1 minute past the hour and 1 minute past the half-hour
 def schedule_downloads():
     schedule.every().hour.at(":01").do(download_image)  # Every hour at minute 1
-    schedule.every().hour.at(":31").do(download_image)  # Every half-hour at minute 31
+    schedule.every().hour.at(":31").do(download_image)  # Every half hour at minute 1
 
-def run_scheduler():
+    # Run the scheduler in a background thread
     while True:
         schedule.run_pending()
         time.sleep(1)
 
-# Route to display the timelapse and images
+# Route to display the timelapse as an HTML slideshow
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    latest_image = images[-1] if images else None  # Get the latest image if available
-    return render_template("index.html", images=images, latest_image=latest_image)
+    return render_template("index.html", images=images, video_path="images/timelapse.mp4")
 
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
-# Route to serve video
-@app.route("/videos/<filename>")
-def serve_video(filename):
-    return send_from_directory(image_folder, filename)
-
 if __name__ == "__main__":
     # Run the scheduler in a background thread
     import threading
-    threading.Thread(target=run_scheduler).start()
+    threading.Thread(target=schedule_downloads, daemon=True).start()
     
     # Run Flask app
     port = int(os.environ.get("PORT", 5000))
