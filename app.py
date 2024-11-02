@@ -106,11 +106,11 @@ def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
 if __name__ == "__main__":
+    # Run Flask app, ensuring it binds to the correct port
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
     # Run the scheduler in the main thread
     while True:
         schedule.run_pending()
         time.sleep(1)
-
-    # Run Flask app
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
