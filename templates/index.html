@@ -3,79 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Slideshow</title>
+    <title>Webcam Timelapse</title>
     <style>
-        /* Basic styling */
         body {
+            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
         }
         h1 {
-            margin-bottom: 20px;
+            padding: 20px;
+            color: #555;
         }
-        .slideshow {
+        .video-container {
+            margin: 20px auto;
+            max-width: 80%;
+        }
+        video {
+            width: 100%;
+            max-width: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .image-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
-            max-width: 800px;
+            padding: 20px;
+            max-width: 80%;
+            margin: auto;
+        }
+        .image-grid img {
             width: 100%;
+            height: auto;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer; /* Make images clickable */
         }
-        .slideshow img {
-            width: 100%;
-            cursor: pointer;
-            border: 2px solid #ccc;
-            transition: transform 0.2s;
-        }
-        .slideshow img:hover {
-            transform: scale(1.05);
-        }
-        /* Lightbox overlay */
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
+        /* Styles for the modal */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgb(0,0,0); 
+            background-color: rgba(0,0,0,0.4); 
+            padding-top: 60px;
         }
-        .lightbox img {
-            max-width: 90%;
-            max-height: 90%;
-            border: 5px solid #fff;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; 
+            max-width: 600px;
+            text-align: center; /* Center the content */
+        }
+        .close {
+            color: #aaa;
+            position: relative; /* Allow positioning within the modal */
+            top: 10px;
+            left: 90%; 
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-image {
+            width: 100%;
+            height: auto;
+        }
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            margin-top: -22px;
+            padding: 16px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+        }
+        .next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+        .prev:hover,
+        .next:hover {
+            background-color: rgba(0,0,0,0.8);
         }
     </style>
 </head>
 <body>
-    <h1>Image Slideshow</h1>
-    <div class="slideshow">
+    <h1>Webcam Timelapse</h1>
+
+    <div class="video-container">
+        <video controls autoplay loop onerror="this.style.display='none'; document.getElementById('error-message').style.display='block';">
+            <source src="/images/timelapse.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div id="error-message" class="error-message" style="display:none;">
+            Error: Unable to play the video. Please check back later.
+        </div>
+    </div>
+
+    <h2>Recent Images</h2>
+    <div class="image-grid">
         {% for image in images %}
-            <img src="{{ url_for('serve_image', filename=image) }}" alt="Webcam Image" onclick="openLightbox(this.src)">
+            <img src="/images/{{ image }}" alt="Webcam Image" onclick="openModal('{{ image }}')">
         {% endfor %}
     </div>
 
-    <!-- Lightbox container -->
-    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <img id="lightboxImage" src="#" alt="Enlarged Image">
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <a class="prev" onclick="plusSlides(-1)">❮</a>
+            <a class="next" onclick="plusSlides(1)">❯</a>
+            <img id="modalImage" class="modal-image" src="" alt="Webcam Image">
+        </div>
     </div>
 
     <script>
-        function openLightbox(src) {
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImage = document.getElementById('lightboxImage');
-            lightboxImage.src = src;
-            lightbox.style.display = 'flex';
+        // Get the modal
+        var modal = document.getElementById("myModal");
+        var modalImg = document.getElementById("modalImage");
+
+        // Array of image filenames
+        var images = [
+            {% for image in images %}
+                '{{ image }}',
+            {% endfor %}
+        ];
+        var slideIndex = 1;
+
+        // Function to open the modal
+        function openModal(imageSrc) {
+            modal.style.display = "block";
+            modalImg.src = "/images/" + imageSrc;
+            // Find the index of the clicked image
+            slideIndex = images.indexOf(imageSrc) + 1;
+            showSlides(slideIndex);
         }
 
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = 'none';
+        // Function to close the modal
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        // Next/previous controls
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        // Function to show the slides
+        function showSlides(n) {
+            if (n > images.length) {slideIndex = 1}
+            if (n < 1) {slideIndex = images.length}
+            modalImg.src = "/images/" + images[slideIndex-1];
+        }
+
+        // Close the modal when the user clicks anywhere outside of the modal content
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
         }
     </script>
 </body>
