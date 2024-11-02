@@ -9,7 +9,7 @@ from flask import Flask, render_template, send_from_directory
 # Configure storage
 image_folder = "images"
 os.makedirs(image_folder, exist_ok=True)
-max_images = 24  # Keeps only the last 12 hours of images
+max_images = 24  # Keeps only the last 24 images
 
 # Base URL and page URL
 base_url = 'https://pmsccams.com'
@@ -39,7 +39,7 @@ def download_image():
 
                 with open(image_path, 'wb') as f:
                     f.write(img_response.content)
-                print(f"Image saved as {image_name}")
+                print(f"Image saved successfully as {image_name}")
                 
                 # Keep only the last 24 images
                 manage_images()
@@ -69,7 +69,7 @@ def run_scheduler():
 # Route to display the timelapse as an HTML slideshow
 @app.route("/")
 def index():
-    images = sorted(os.listdir(image_folder))[-max_images:]
+    images = sorted(os.listdir(image_folder))[-max_images:]  # Get the last max_images
     return render_template("index.html", images=images)
 
 # Route to serve images
