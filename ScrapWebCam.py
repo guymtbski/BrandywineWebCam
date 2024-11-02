@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 # Folder where the images will be saved
-save_folder = '/'
+save_folder = os.path.dirname(os.path.abspath(__file__))
 
 # Base URL and page URL
 base_url = 'https://pmsccams.com'
