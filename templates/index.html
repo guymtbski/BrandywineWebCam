@@ -8,17 +8,48 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
+            background-color: #f0f0f0; /* Light grey background */
+            color: #333; /* Darker text for contrast */
+            margin: 0;
+            padding: 20px;
         }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-bottom: 1em;
+        }
+
+        .image-container {
+            display: flex;
+            flex-wrap: wrap; /* Allows images to wrap onto the next line */
+            justify-content: center; /* Center the images */
+            margin-top: 20px;
+        }
+
         img {
-            max-width: 300px;
+            max-width: 100%; /* Responsive image */
+            height: auto; /* Maintain aspect ratio */
             margin: 10px;
+            border-radius: 8px; /* Slightly rounded corners */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        }
+
+        @media (min-width: 600px) {
+            img {
+                width: 300px; /* Fixed width for larger screens */
+            }
         }
     </style>
 </head>
 <body>
     <h1>Webcam Timelapse</h1>
     <h2>Latest Images</h2>
-    <div>
+    <div class="image-container">
         {% for image in images %}
             <img src="{{ url_for('serve_image', filename=image) }}" alt="{{ image }}">
         {% endfor %}
