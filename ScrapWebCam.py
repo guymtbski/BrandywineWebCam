@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 # Folder where the images will be saved
-save_folder = 'C:/Users/Admin/Desktop/brandywine_images'
+save_folder = '/'
 
 # Base URL and page URL
 base_url = 'https://pmsccams.com'
