@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, send_from_directory, jsonify
 import cv2
-import subprocess  # Import for FFmpeg
+from timelapse import create_timelapse  # Import the timelapse library
 
 # Configure storage
 image_folder = "images"
@@ -78,22 +78,18 @@ def create_timelapse_video():
             print("Video is less than 30 minutes old. Skipping creation.")
             return
 
-    # Use FFmpeg to create the video with overwrite option
-    ffmpeg_cmd = [
-        'ffmpeg', '-y',  # Add -y to overwrite
-        '-loglevel', 'debug', 
-        '-framerate', '1',
-        '-pattern_type', 'glob',
-        '-i', f'{os.getcwd()}/{image_folder}/*.jpg',
-        '-c:v', 'libx264',
-        '-pix_fmt', 'yuv420p',
-        video_path
-    ]
-
     try:
-        subprocess.run(ffmpeg_cmd, check=True)
+        # Use the timelapse library to create the video
+        create_timelapse(
+            image_folder,            # Input folder containing images
+            video_path,              # Output video file path
+            fps=1,                   # Frames per second
+            image_extensions=['jpg'],  # Image file extensions to include
+            overwrite=True           # Overwrite existing video file
+        )
         print("Timelapse video created successfully at", video_path)
-    except subprocess.CalledProcessError as e:
+
+    except Exception as e:
         print(f"Error creating video: {e}")
 
 def scrape_initial_images():
@@ -112,7 +108,7 @@ def schedule_downloads():
         time.sleep(10)  # Check every 10 seconds
 
     # Now start the scheduler in the background
-    import threading  # Import threading here
+    import threading
     threading.Thread(target=schedule.run_pending, daemon=True).start()
 
 # Route to display the timelapse as an HTML slideshow
