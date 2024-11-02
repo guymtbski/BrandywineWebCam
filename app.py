@@ -24,7 +24,7 @@ def download_image():
     try:
         response = requests.get(page_url)
         response.raise_for_status()
-        
+
         soup = BeautifulSoup(response.text, 'html.parser')
         img_tag = soup.find('img')
 
@@ -41,15 +41,15 @@ def download_image():
                 with open(image_path, 'wb') as f:
                     f.write(img_response.content)
                 print(f"Image saved successfully as {image_name}")
-                
+
                 # Manage images and create timelapse
                 manage_images()
-                create_timelapse_video()  # Create or update the timelapse video
+                create_timelapse_video()
             else:
                 print("Downloaded content is not an image.")
         else:
             print("No image found on the page.")
-    
+
     except Exception as e:
         print(f"Error occurred: {e}")
 
@@ -61,68 +61,61 @@ def manage_images():
             print(f"Deleted old image: {image}")
 
 def create_timelapse_video():
-    images = sorted(os.listdir(image_folder))[-max_images:]  # Get the last images
+    images = sorted(os.listdir(image_folder))[-max_images:]
     if not images:
         print("No images to create a video.")
         return
 
-    # Define the video file path
     video_path = os.path.join(image_folder, 'timelapse.mp4')
-    
-    # Get the size of the first image to set the video size
+
     first_image = cv2.imread(os.path.join(image_folder, images[0]))
     height, width, layers = first_image.shape
-    
-    # Create a VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
-    video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))  # 1 fps for timelapse
 
-    # Write each image to the video
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter(video_path, fourcc, 1, (width, height))
+
     for image in images:
         image_path = os.path.join(image_folder, image)
         img = cv2.imread(image_path)
         video.write(img)
-    
+
     video.release()
     print("Timelapse video created successfully at", video_path)
 
 def scrape_initial_images():
     print("Scraping initial 24 images...")
     for _ in range(max_images):
-        download_image()  # Download and save an image
+        download_image()
 
-# Schedule image download at 1 minute past the hour and 1 minute past the half-hour
 def schedule_downloads():
-    schedule.every().hour.at(":01").do(download_image)  # Every hour at minute 1
-    schedule.every().hour.at(":31").do(download_image)  # Every half hour at minute 31
+    schedule.every().hour.at(":01").do(download_image)
+    schedule.every().hour.at(":31").do(download_image)
 
 # Route to display the timelapse as an HTML slideshow
 @app.route("/")
 def index():
     images = sorted(os.listdir(image_folder))[-max_images:]
-    return render_template("index.html", images=images)
+    return render_template("index.html", images=images, video_path="images/timelapse.mp4")
 
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
-    return send_from_directory(image_folder, filename)
+    if filename == "timelapse.mp4":
+        return send_from_directory(image_folder, filename, mimetype="video/mp4")
+    else:
+        return send_from_directory(image_folder, filename)
 
 @app.route("/list-files")
 def list_files():
-    files = os.listdir(image_folder)  # or another folder path
+    files = os.listdir(image_folder)
     return jsonify(files)
 
 if __name__ == "__main__":
-    # Run the initial scrape
     scrape_initial_images()
-    
-    # Schedule downloads
     schedule_downloads()
 
-    # Run the scheduler in a background thread
     import threading
-    threading.Thread(target=schedule.run_pending).start()
+    threading.Thread(target=schedule.run_pending, daemon=True).start()
 
-    # Run Flask app
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
