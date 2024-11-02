@@ -4,7 +4,7 @@ import schedule
 import time
 from datetime import datetime
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory, jsonify, Response
 import cv2
 
 # Configure storage
@@ -85,7 +85,12 @@ def create_timelapse_video():
         image_path = os.path.join(image_folder, image)
         img = cv2.imread(image_path)
         video.write(img)
-    
+
+    # If there's only one image, duplicate it to create a 2-frame video
+    if len(images) == 1:
+        img = cv2.imread(os.path.join(image_folder, images[0]))
+        video.write(img)
+
     video.release()
     print("Timelapse video created successfully at", video_path)
 
@@ -108,6 +113,15 @@ def index():
 @app.route("/images/<filename>")
 def serve_image(filename):
     return send_from_directory(image_folder, filename)
+
+# Route to serve the video with correct MIME type
+@app.route("/timelapse")
+def serve_timelapse():
+    video_path = os.path.join(image_folder, 'timelapse.mp4')
+    if os.path.exists(video_path):
+        return send_from_directory(image_folder, 'timelapse.mp4', mimetype='video/mp4')
+    else:
+        return "No timelapse video available.", 404
 
 # Route to display the list of files in JSON format
 @app.route("/list-files")
