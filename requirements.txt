@@ -1,6 +1,4 @@
-moviepy
-opencv-python
+Flask
+BeautifulSoup4
 requests
-beautifulsoup4
-flask
-schedule
+apscheduler
