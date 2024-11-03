@@ -81,7 +81,7 @@ def create_timelapse_video():
         # Use moviepy to create the video
         image_files = [os.path.join(image_folder, img) for img in images]
         clip = ImageSequenceClip(image_files, fps=1)
-        clip.write_videofile(video_path, codec="libx264")
+        clip.write_videofile(video_path, codec="libx264", ffmpeg_params=['-pix_fmt', 'yuv420p'])  # Explicit codec and pixel format
         print("Timelapse video created successfully at", video_path)
     except Exception as e:
         print(f"Error creating video: {e}")
@@ -104,7 +104,10 @@ def index():
 # Route to serve images
 @app.route("/images/<filename>")
 def serve_image(filename):
-    return send_from_directory(image_folder, filename)
+    if filename == "timelapse.mp4":
+        return send_from_directory(image_folder, filename, mimetype="video/mp4")  # Explicit MIME type for video
+    else:
+        return send_from_directory(image_folder, filename)
 
 if __name__ == "__main__":
     # Schedule downloads
