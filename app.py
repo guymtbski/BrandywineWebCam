@@ -5,7 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 import datetime
 import logging
-from urllib.parse import urljoin  # Import urljoin
+from urllib.parse import urljoin
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,7 +21,6 @@ def scrape_and_replace_image():
     try:
         logging.info("Starting image scraping and replacement process")
 
-        # Scrape the image
         url = "https://pmsccams.com/?SearchDeviceID=4"
         response = requests.get(url)
         response.raise_for_status()
@@ -29,7 +28,7 @@ def scrape_and_replace_image():
         logging.info("Successfully fetched webpage content")
 
         soup = BeautifulSoup(response.content, "html.parser")
-        img_tag = soup.find('img')  # Find the <img> tag
+        img_tag = soup.find('img')
         if img_tag is None:
             logging.error("Image tag not found on the page")
             return
@@ -46,15 +45,13 @@ def scrape_and_replace_image():
 
         logging.info("Successfully downloaded image")
 
-        # Determine the filename for replacement
         img_files = [f for f in os.listdir(IMG_DIR) if f.endswith(('.jpg', '.jpeg', '.png'))]
         if img_files:
-            img_to_replace = os.path.join(IMG_DIR, img_files[0])  # Replace the first image
+            img_to_replace = os.path.join(IMG_DIR, img_files[0])
             with open(img_to_replace, 'wb') as f:
                 f.write(img_data)
             logging.info(f"Replaced image: {img_to_replace}")
         else:
-            # If no images exist yet, save as a new image
             with open(os.path.join(IMG_DIR, 'image1.jpg'), 'wb') as f:
                 f.write(img_data)
             logging.info("Saved initial image")
@@ -79,4 +76,4 @@ def get_images():
     return jsonify(img_files)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False, host="0.0.0.0", port=10000)  # Run on port 10000
