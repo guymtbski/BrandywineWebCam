@@ -2,9 +2,9 @@ import os
 import requests
 import schedule
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 import cv2
 from moviepy.editor import ImageSequenceClip
 
@@ -43,8 +43,9 @@ def download_image():
                     f.write(img_response.content)
                 print(f"Image saved successfully as {image_name}")
 
-                # Manage images
+                # Manage images and create timelapse
                 manage_images()
+                create_timelapse_video()  # Create video on each image download
             else:
                 print("Downloaded content is not an image.")
         else:
@@ -71,19 +72,10 @@ def manage_images():
 
 
 def create_timelapse_video():
-    # Get the last 24 images, or replicate the first one if there are fewer
+    # Get the last 24 images, or the replicated ones if there are fewer
     images = sorted(os.listdir(image_folder))[-max_images:]
 
     video_path = os.path.join(image_folder, 'timelapse.mp4')
-
-    # Check if it's time to create a new video (every 12 hours)
-    if os.path.exists(video_path):
-        creation_time = datetime.fromtimestamp(os.path.getmtime(video_path))
-        now = datetime.now()
-        time_diff = now - creation_time
-        if time_diff < timedelta(hours=12):
-            print("Video is less than 12 hours old. Skipping creation.")
-            return
 
     try:
         # Use moviepy to create the video
@@ -93,6 +85,7 @@ def create_timelapse_video():
         print("Timelapse video created successfully at", video_path)
     except Exception as e:
         print(f"Error creating video: {e}")
+
 
 def schedule_downloads():
     schedule.every().hour.at(":01").do(download_image)
@@ -114,7 +107,8 @@ def serve_image(filename):
     return send_from_directory(image_folder, filename)
 
 if __name__ == "__main__":
-    # ... your existing code ...
+    # Schedule downloads
+    schedule_downloads()
 
-    port = int(os.environ.get("PORT", 5000))  # Get port from environment
-    app.run(host="0.0.0.0", port=port, debug=False)  # Bind to all addresses, debug off
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
