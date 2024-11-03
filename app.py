@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 app = Flask(__name__)
 
 # Image directory
-IMG_DIR = 'static/images'  # Make sure this is the correct path
+IMG_DIR = 'static/images'
 if not os.path.exists(IMG_DIR):
     os.makedirs(IMG_DIR)
 
@@ -47,14 +47,21 @@ def scrape_and_replace_image():
 
         img_files = [f for f in os.listdir(IMG_DIR) if f.endswith(('.jpg', '.jpeg', '.png'))]
         if img_files:
-            img_to_replace = os.path.join(IMG_DIR, img_files[0])
+            # Generate a timestamped filename
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            new_filename = f"image_{timestamp}.jpg"
+            img_to_replace = os.path.join(IMG_DIR, new_filename)
+
             with open(img_to_replace, 'wb') as f:
                 f.write(img_data)
             logging.info(f"Replaced image: {img_to_replace}")
         else:
-            with open(os.path.join(IMG_DIR, 'image1.jpg'), 'wb') as f:
+            # Generate a timestamped filename for the initial image
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            initial_filename = f"image_{timestamp}.jpg"
+            with open(os.path.join(IMG_DIR, initial_filename), 'wb') as f:
                 f.write(img_data)
-            logging.info("Saved initial image")
+            logging.info(f"Saved initial image to: {os.path.join(IMG_DIR, initial_filename)}")
 
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching image: {e}")
