@@ -3,189 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webcam Timelapse</title>
+    <title>Image Slideshow</title>
     <style>
         body {
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-            color: #333;
-            text-align: center;
+            background-color: #333; /* Dark background */
+            color: #eee; /* Light text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 0;
+            flex-direction: column; /* Align items vertically */
         }
-        h1 {
-            padding: 20px;
-            color: #555;
+
+        .slideshow-container {
+            width: 80%;
+            max-width: 800px;
+            position: relative;
+            margin: 20px auto; /* Center the slideshow */
         }
-        .video-container {
-            margin: 20px auto;
-            max-width: 80%;
+
+        .slide {
+            display: none;
         }
-        video {
-            width: 100%;
-            max-width: 600px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-        }
-        .error-message {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            padding: 20px;
-            max-width: 80%;
-            margin: auto;
-        }
-        .image-grid img {
-            width: 100%;
-            height: auto;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            cursor: pointer; /* Make images clickable */
-        }
-        /* Styles for the modal */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1; 
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: rgb(0,0,0); 
-            background-color: rgba(0,0,0,0.4); 
-            padding-top: 60px;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto; 
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%; 
-            max-width: 600px;
-            text-align: center; /* Center the content */
-        }
-        .close {
-            color: #aaa;
-            position: relative; /* Allow positioning within the modal */
-            top: 10px;
-            left: 90%; 
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .modal-image {
+
+        .slide img {
             width: 100%;
             height: auto;
         }
-        .prev, .next {
-            cursor: pointer;
-            position: absolute;
-            top: 50%;
-            width: auto;
-            margin-top: -22px;
-            padding: 16px;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-            transition: 0.6s ease;
-            border-radius: 0 3px 3px 0;
-            user-select: none;
+
+        .fade {
+            animation-name: fade;
+            animation-duration: 1.5s;
         }
-        .next {
-            right: 0;
-            border-radius: 3px 0 0 3px;
-        }
-        .prev:hover,
-        .next:hover {
-            background-color: rgba(0,0,0,0.8);
+
+        @keyframes fade {
+            from {opacity: 0.4}
+            to {opacity: 1}
         }
     </style>
 </head>
 <body>
-    <h1>Webcam Timelapse</h1>
-
-    <div class="video-container">
-        <video controls autoplay loop onerror="this.style.display='none'; document.getElementById('error-message').style.display='block';">
-            <source src="/images/timelapse.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <div id="error-message" class="error-message" style="display:none;">
-            Error: Unable to play the video. Please check back later.
+    <h1>Image Slideshow</h1>
+    <div class="slideshow-container">
         </div>
-    </div>
-
-    <h2>Recent Images</h2>
-    <div class="image-grid">
-        {% for image in images %}
-            <img src="/images/{{ image }}" alt="Webcam Image" onclick="openModal('{{ image }}')">
-        {% endfor %}
-    </div>
-
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <a class="prev" onclick="plusSlides(-1)">❮</a>
-            <a class="next" onclick="plusSlides(1)">❯</a>
-            <img id="modalImage" class="modal-image" src="" alt="Webcam Image">
-        </div>
-    </div>
 
     <script>
-        // Get the modal
-        var modal = document.getElementById("myModal");
-        var modalImg = document.getElementById("modalImage");
+        const slideshowContainer = document.querySelector('.slideshow-container');
 
-        // Array of image filenames
-        var images = [
-            {% for image in images %}
-                '{{ image }}',
-            {% endfor %}
-        ];
-        var slideIndex = 1;
+        function loadImages() {
+            fetch('/images')
+                .then(response => response.json())
+                .then(images => {
+                    images.forEach(image => {
+                        const slide = document.createElement('div');
+                        slide.classList.add('slide', 'fade');
 
-        // Function to open the modal
-        function openModal(imageSrc) {
-            modal.style.display = "block";
-            modalImg.src = "/images/" + imageSrc;
-            // Find the index of the clicked image
-            slideIndex = images.indexOf(imageSrc) + 1;
-            showSlides(slideIndex);
+                        const img = document.createElement('img');
+                        img.src = `/static/images/${image}`;
+                        img.alt = 'Camera Image';
+
+                        slide.appendChild(img);
+                        slideshowContainer.appendChild(slide);
+                    });
+
+                    // Slideshow logic (simplified)
+                    let slideIndex = 0;
+                    showSlides();
+
+                    function showSlides() {
+                        let i;
+                        const slides = document.querySelectorAll('.slide');
+                        for (i = 0; i < slides.length; i++) {
+                            slides[i].style.display = "none";
+                        }
+                        slideIndex++;
+                        if (slideIndex > slides.length) {slideIndex = 1}
+                        slides[slideIndex-1].style.display = "block";
+                        setTimeout(showSlides, 5000); // Change image every 5 seconds
+                    }
+                });
         }
 
-        // Function to close the modal
-        function closeModal() {
-            modal.style.display = "none";
-        }
-
-        // Next/previous controls
-        function plusSlides(n) {
-            showSlides(slideIndex += n);
-        }
-
-        // Function to show the slides
-        function showSlides(n) {
-            if (n > images.length) {slideIndex = 1}
-            if (n < 1) {slideIndex = images.length}
-            modalImg.src = "/images/" + images[slideIndex-1];
-        }
-
-        // Close the modal when the user clicks anywhere outside of the modal content
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
+        loadImages();
     </script>
 </body>
 </html>
