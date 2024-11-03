@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 import requests
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 app = Flask(__name__)
 
 # Image directory
-IMG_DIR = 'static/images'
+IMG_DIR = 'static/images'  # Make sure this is the correct path
 if not os.path.exists(IMG_DIR):
     os.makedirs(IMG_DIR)
 
@@ -61,19 +61,23 @@ def scrape_and_replace_image():
     except Exception as e:
         logging.exception(f"An error occurred: {e}")
 
-# Schedule the task
+# Schedule the task (consider using Render's built-in scheduler)
 scheduler = BackgroundScheduler()
 scheduler.add_job(scrape_and_replace_image, 'interval', minutes=30, next_run_time=datetime.datetime.now() + datetime.timedelta(minutes=1))
 scheduler.start()
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # Correct path
+    return render_template("index.html")
 
 @app.route("/images")
 def get_images():
     img_files = [f for f in os.listdir(IMG_DIR) if f.endswith(('.jpg', '.jpeg', '.png'))]
     return jsonify(img_files)
 
+@app.route('/view/<filename>')
+def view_image(filename):
+    return send_from_directory(IMG_DIR, filename)
+
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=10000)  # Run on port 10000
+    app.run(debug=False, host="0.0.0.0", port=10000)
