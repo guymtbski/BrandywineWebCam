@@ -68,7 +68,7 @@ scheduler.start()
 
 @app.route("/")
 def index():
-    return render_template("templates/index.html")
+    return render_template("index.html")  # Correct path
 
 @app.route("/images")
 def get_images():
